@@ -1,0 +1,118 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+
+<!-- Edit to select which version is desired 3.3.4 or 3.5  -->
+
+<script type="text/javascript" src="/brython3.3.4/brython.js"></script>
+<script type="text/javascript" src="/brython3.3.4/brython_stdlib.js"></script>
+
+<script>
+    Namespace = {};
+
+    Namespace.MyError = function (message) {
+        var output = document.getElementById('print-output');
+        try{
+            return window.MyException_en(message);
+        } catch (e) {
+            output.innerHTML += "Should not have reached this point";
+        }
+    };
+
+    function run_py(ev) {
+        var src = document.getElementById('source').innerText;
+        var output = document.getElementById('print-output');
+        Namespace.cached_exception = undefined;
+        output.innerHTML = '';
+
+        try {
+            eval_py(src);
+        } catch (e) {
+            output.innerHTML += ("Error caught where it shouldn't.<br>");
+            console.log(e);
+        }
+        output.innerHTML += Namespace.cached_exception.custom_message;
+    }
+
+    function create_js_exception() {
+        throw new Namespace.MyError("Happily creating an exception")
+    }
+</script>
+
+
+
+<script id="python_script" type="text/python">
+    import sys
+    from browser import document, window
+
+    def _write(*args):
+        document["print-output"].html += ''.join(args)
+
+    sys.stdout.write = _write
+
+    class MyException(Exception):
+        def __init__(self, message):
+            self.custom_message = message;
+    window['MyException_en'] = MyException
+
+    def create_exception() :
+        window.create_js_exception()
+
+    def eval_py(src):
+        window.console.dir(window.Namespace)
+        try:
+            window.console.log("before executing the code")
+            exec(src)
+            window.console.log("no exception was raised")
+        except Exception as e:
+            window.console.log("before assigning to cached_exception")
+            window.Namespace.cached_exception = e
+            window.console.log("after assigning to cached_exception")
+        finally:
+            window.console.log("Finally executed")
+    window['eval_py'] = eval_py
+
+    print("Brython version used:", __BRYTHON__.__MAGIC__)
+</script>
+
+
+<style>
+  p, pre {
+    max-width: 800px;
+  }
+  button {
+    margin: 20px;
+    padding: 10px;
+  }
+
+</style>
+
+</head>
+
+<body onload="brython(1)">
+
+<p>
+    Attempting to create an <b>absolute</b> minimal working example that reproduces
+    the type of error seen in Reeborg when using Brython 3.5.0rc1 and
+    which was not present when using Brython 3.3.4.
+
+    Edit the html file to select the desired version to run the tests.
+    <br>
+    Once this example works, test the slightly more convoluted one which is
+    closer to the code I run, and can be used to compare running Javascript and
+    Python examples.
+</p>
+
+<p><button onclick="run_py()">Exec Python</button>
+</p>
+
+<pre id="source" contenteditable="true">
+create_exception()
+</pre>
+
+<pre id="print-output"></pre>
+
+</body>
+
+</html>
