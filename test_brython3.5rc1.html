@@ -1,0 +1,179 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+
+<!-- Edit to select which version is desired 3.3.4 or 3.5  -->
+
+<script type="text/javascript" src="/brython3.3.4/brython.js"></script>
+<script type="text/javascript" src="/brython3.3.4/brython_stdlib.js"></script>
+
+<script>
+    Namespace = {};
+    Namespace.MyError = function (message) {
+        var output = document.getElementById('print-output');
+        var err;
+        if (window.proglang == 'py'){
+            try{
+                err = window.MyException_en(message);
+                return err;
+            } catch (e) {
+                output.innerHTML += "Should not have reached this point";
+            }
+        }
+        this.name = "MyError";
+        this.message = message;
+        this.custom_message = message;
+    };
+
+    function run_py(ev) {
+        var error, message, output = document.getElementById('print-output');
+        var src = document.getElementById('source').innerText;
+        Namespace.cached_exception = undefined;
+        output.innerHTML = '';
+
+        window.proglang = 'py';
+        try {
+            eval_py(src);
+        } catch (e) {
+            output.innerHTML += ("Error caught where it shouldn't.<br>");
+            console.log(e);
+        }
+        error = Namespace.cached_exception;
+        if (error) {
+            output.innerHTML += "progamming_language " + window.proglang + "<br>";
+            output.innerHTML += error.custom_message;
+        }
+    }
+
+    function run_js(ev) {
+        var src = document.getElementById('source').innerText;
+        var output = document.getElementById('print-output');
+        output.innerHTML = '';
+        window.proglang = 'js';
+        output.innerHTML += "progamming_language " + window.proglang + "<br>";
+        try{
+            eval(src);
+            output.innerHTML += "No exception generated.";
+        } catch (e) {
+            output.innerHTML += e.custom_message;
+        }
+    }
+
+    function create_exception() {
+        throw new Namespace.MyError("Happily creating an exception")
+    }
+</script>
+
+
+
+<script id="python_script" type="text/python">
+    import sys
+    import traceback
+    from browser import document, timer, window
+
+    def _write(*args):
+        document["print-output"].html += ''.join(args)
+    def __write(*args):
+        document["print-output"].html += '<span class="error">' + ''.join(args) + '</span>'
+
+    sys.stdout.write = _write
+    sys.stderr.write = __write
+
+    class MyException(Exception):
+        def __init__(self, message):
+            self.message = message
+            self.custom_message = message;
+            super().__init__(message)
+        def __str__(self):
+            return self.custom_message
+    window['MyException_en'] = MyException
+
+    def create_exception() :
+        window.create_exception()
+
+    def eval_py(src):
+        globals_ = {}
+        globals_['window'] = window
+        globals_['MyException'] = MyException
+        globals_['create_exception'] = create_exception
+        try:
+            exec(src, globals_)
+            print("No exception generated.")
+        except Exception as e:
+            window.Namespace.cached_exception = e
+
+    window['eval_py'] = eval_py
+
+
+
+    print("Brython version used:", __BRYTHON__.__MAGIC__)
+</script>
+
+
+<style>
+  h1, h2, h3, h4 {
+    color: blue;
+  }
+
+  p {
+    max-width: 800px;
+  }
+
+  pre {
+    max-width: 800px;
+    overflow: auto;
+    word-break: normal !important;
+    word-wrap: normal !important;
+    white-space: pre !important;
+    font-weight: bold;
+  }
+  pre#source {
+    border: 1px solid blue;
+    background-color:antiquewhite;
+  }
+
+  pre#print-output {
+    background-color: black;
+    color: yellow;
+    font-weight: bolder;
+    min-height: 50px;
+    height: auto;
+  }
+
+  button {
+    margin: 20px;
+    padding: 10px;
+  }
+
+  .error {
+    color: red;
+  }
+</style>
+
+</head>
+
+<body onload="brython(1)">
+
+<p>
+    Attempting to create minimal working example that reproduces
+    the type of error seen in Reeborg when using Brython 3.5.0rc1 and
+    which was not present when using Brython 3.3.4.
+
+    Edit the html file to select the desired version to run the tests.
+</p>
+
+<p> <button onclick="run_js()">Eval Javascript</button>
+    <button onclick="run_py()">Exec Python</button>
+</p>
+
+<pre id="source" contenteditable="true">
+create_exception()
+</pre>
+
+<pre id="print-output"></pre>
+
+
+</body>
+
+</html>
