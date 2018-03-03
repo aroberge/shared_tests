@@ -41,6 +41,13 @@
         }
     }
 
+    function run_second_example (ev) {
+        var src = document.getElementById('second-example').innerText;
+        var output = document.getElementById('print-output');
+        output.innerHTML = '';
+        eval_py(src);
+    }
+
     function create_js_exception() {
         throw new Namespace.MyError("Happily creating an exception")
     }
@@ -82,6 +89,9 @@
   p, pre {
     max-width: 800px;
   }
+  pre#print-output {
+      background: antiquewhite;
+  }
   button {
     margin: 20px;
     padding: 10px;
@@ -106,6 +116,7 @@
 </p>
 
 <p><button onclick="run_py()">Exec Python</button>
+    <button onclick="run_second_example()">Second example</button>
 </p>
 
 <pre id="source" contenteditable="true">
@@ -113,6 +124,26 @@ create_exception()
 </pre>
 
 <pre id="print-output"></pre>
+
+<pre id="second-example" contenteditable="true">
+class MyOtherException(Exception):
+    pass
+
+try:
+    raise MyOtherException()
+except MyOtherException:
+    print("Ok, MyOtherException caught")
+except BaseException:
+    print("Wrong, BaseException caught")
+
+try:
+    create_exception()
+except MyException:
+    print("Ok, MyException caught")
+except BaseException:
+    print("Wrong, BaseException caught")
+
+</pre>
 
 </body>
 
