@@ -5,8 +5,8 @@
 
 <!-- Edit to select which version is desired 3.3.4 or 3.5  -->
 
-<script type="text/javascript" src="/brython3.3.4/brython.js"></script>
-<script type="text/javascript" src="/brython3.3.4/brython_stdlib.js"></script>
+<script type="text/javascript" src="/brython3.5/brython.js"></script>
+<script type="text/javascript" src="/brython3.5/brython_stdlib.js"></script>
 
 <script>
     Namespace = {};
@@ -14,7 +14,11 @@
     Namespace.MyError = function (message) {
         var output = document.getElementById('print-output');
         try{
-            return window.MyException_en(message);
+            if (__BRYTHON__.__MAGIC__ == "3.3.4") {
+                return window.MyException_en(message);
+            } else {
+                return __BRYTHON__.$call(window.MyException_en)(message);
+            }
         } catch (e) {
             output.innerHTML += "Should not have reached this point";
         }
@@ -28,11 +32,13 @@
 
         try {
             eval_py(src);
+            if (Namespace.cached_exception) { // rethrow to process at the JS layer
+                throw Namespace.cached_exception;
+            }
         } catch (e) {
-            output.innerHTML += ("Error caught where it shouldn't.<br>");
-            console.log(e);
+            output.innerHTML += e.__name__ + ": ";
+            output.innerHTML += e.custom_message;
         }
-        output.innerHTML += Namespace.cached_exception.custom_message;
     }
 
     function create_js_exception() {
@@ -54,6 +60,7 @@
     class MyException(Exception):
         def __init__(self, message):
             self.custom_message = message;
+            super().__init__(message)
     window['MyException_en'] = MyException
 
     def create_exception() :
@@ -62,15 +69,9 @@
     def eval_py(src):
         window.console.dir(window.Namespace)
         try:
-            window.console.log("before executing the code")
             exec(src)
-            window.console.log("no exception was raised")
         except Exception as e:
-            window.console.log("before assigning to cached_exception")
             window.Namespace.cached_exception = e
-            window.console.log("after assigning to cached_exception")
-        finally:
-            window.console.log("Finally executed")
     window['eval_py'] = eval_py
 
     print("Brython version used:", __BRYTHON__.__MAGIC__)
