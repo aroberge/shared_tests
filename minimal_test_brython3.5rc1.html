@@ -38,6 +38,12 @@
         } catch (e) {
             output.innerHTML += e.__name__ + ": ";
             output.innerHTML += e.custom_message;
+            if (e.__name__ == "BaseException") {
+                output.innerHTML += "<br>Attempting to recover true name: ";
+                if (e.__class__ !== undefined && e.__class__.__name__ !== undefined) {
+                    output.innerHTML += e.__class__.__name__;
+                }
+            }
         }
     }
 
@@ -74,7 +80,6 @@
         window.create_js_exception()
 
     def eval_py(src):
-        window.console.dir(window.Namespace)
         try:
             exec(src)
         except Exception as e:
